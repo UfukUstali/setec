@@ -13,7 +13,6 @@ require (
 	github.com/creachadair/mds v0.25.2
 	github.com/creachadair/msync v0.5.6
 	github.com/google/go-cmp v0.7.0
-	github.com/tink-crypto/tink-go-awskms v0.0.0-20230616072154-ba4f9f22c3e9
 	github.com/tink-crypto/tink-go/v2 v2.1.0
 	golang.org/x/term v0.30.0
 	honnef.co/go/tools v0.6.1
@@ -25,7 +24,6 @@ require (
 	github.com/BurntSushi/toml v1.4.1-0.20240526193622-a339e1f7089c // indirect
 	github.com/akutz/memconn v0.1.0 // indirect
 	github.com/alexbrainman/sspi v0.0.0-20231016080023-1a75b4708caa // indirect
-	github.com/aws/aws-sdk-go v1.44.267 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.8 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.27 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.31 // indirect
