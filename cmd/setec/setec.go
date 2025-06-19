@@ -32,7 +32,10 @@ import (
 	"github.com/tailscale/setec/internal/tinktestutil"
 	"github.com/tailscale/setec/server"
 	"github.com/tailscale/setec/types/api"
-	"github.com/tink-crypto/tink-go-awskms/v2/integration/awskms"
+	"github.com/tink-crypto/tink-go/v2/aead"
+	ckeyset "github.com/tink-crypto/tink-go/v2/insecurecleartextkeyset"
+	"github.com/tink-crypto/tink-go/v2/keyset"
+	"github.com/tink-crypto/tink-go/v2/testutil"
 	"github.com/tink-crypto/tink-go/v2/tink"
 	"golang.org/x/term"
 	"tailscale.com/tsnet"
@@ -150,6 +153,11 @@ generate the token, then re-run appending the provided value.`,
 
 				Run: command.Adapt(runDeleteSecret),
 			},
+			{
+				Name: "generate-key",
+				Help: "Generate a new tink key and write it to stdout.",
+				Run:  command.Adapt(generateTinkKey),
+			},
 			command.HelpCommand(nil),
 			command.VersionCommand(),
 		},
@@ -188,10 +196,8 @@ func runServer(env *command.Env) error {
 		if serverArgs.Hostname == "" {
 			serverArgs.Hostname = "setec-dev"
 		}
-		if serverArgs.KMSKeyName == "" {
-			kek = &tinktestutil.DummyAEAD{
-				Name: "SetecDevOnlyDummyEncryption",
-			}
+		kek = &testutil.DummyAEAD{
+			Name: "SetecDevOnlyDummyEncryption",
 		}
 		log.Printf("dev mode: state dir is %q", serverArgs.StateDir)
 		log.Printf("dev mode: hostname is %q", serverArgs.Hostname)
@@ -205,19 +211,13 @@ func runServer(env *command.Env) error {
 		return errors.New("--hostname must be specified")
 	}
 	if kek == nil {
-		if serverArgs.KMSKeyName == "" {
-			return errors.New("--kms-key-name must be specified")
-		}
-		// Tink requires prefixing the key identifier with a URI
-		// scheme that identifies the correct backend to use.
-		uri := "aws-kms://" + serverArgs.KMSKeyName
-		kmsClient, err := awskms.NewClientWithOptions(uri)
+		keySet, err := ckeyset.Read(keyset.NewJSONReader(os.Stdin))
 		if err != nil {
-			return fmt.Errorf("creating AWS KMS client: %v", err)
+			return fmt.Errorf("reading keyset: %v", err)
 		}
-		kek, err = kmsClient.GetAEAD(uri)
+		kek, err = aead.New(keySet)
 		if err != nil {
-			return fmt.Errorf("getting KMS key handle: %v", err)
+			return fmt.Errorf("creating aead: %v", err)
 		}
 	}
 
@@ -521,6 +521,19 @@ func runDeleteSecret(env *command.Env, name string, rest ...string) error {
 	}
 	if err := c.Delete(env.Context(), name); err != nil {
 		return fmt.Errorf("failed to delete secret %q: %w", name, err)
+	}
+	return nil
+}
+
+func generateTinkKey(env *command.Env, rest ...string) error {
+	handle, err := keyset.NewHandle(aead.AES256GCMKeyTemplate())
+	if err != nil {
+		return fmt.Errorf("couldn't create handle: %v", err)
+	}
+
+	err = ckeyset.Write(handle, keyset.NewJSONWriter(os.Stdout))
+	if err != nil {
+		return fmt.Errorf("couldn't write to stdout: %v", err)
 	}
 	return nil
 }
