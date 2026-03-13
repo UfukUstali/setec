@@ -34,7 +34,6 @@ import (
 	"github.com/tink-crypto/tink-go/v2/aead"
 	ckeyset "github.com/tink-crypto/tink-go/v2/insecurecleartextkeyset"
 	"github.com/tink-crypto/tink-go/v2/keyset"
-	"github.com/tink-crypto/tink-go/v2/testutil"
 	"github.com/tink-crypto/tink-go/v2/tink"
 	"golang.org/x/term"
 	"tailscale.com/tsnet"
@@ -184,24 +183,24 @@ var clientArgs struct {
 
 func runServer(env *command.Env) error {
 	var kek tink.AEAD
-	if serverArgs.Dev {
-		if serverArgs.StateDir == "" {
-			const devState = "setec-dev.state"
-			if err := os.MkdirAll(devState, 0700); err != nil {
-				return fmt.Errorf("creating dev state dir %q: %w", devState, err)
-			}
-			serverArgs.StateDir = devState
-		}
-		if serverArgs.Hostname == "" {
-			serverArgs.Hostname = "setec-dev"
-		}
-		kek = &testutil.DummyAEAD{
-			Name: "SetecDevOnlyDummyEncryption",
-		}
-		log.Printf("dev mode: state dir is %q", serverArgs.StateDir)
-		log.Printf("dev mode: hostname is %q", serverArgs.Hostname)
-		log.Println("dev mode: using dummy KMS, NOT SAFE FOR PRODUCTION USE")
-	}
+	// if serverArgs.Dev {
+	// 	if serverArgs.StateDir == "" {
+	// 		const devState = "setec-dev.state"
+	// 		if err := os.MkdirAll(devState, 0700); err != nil {
+	// 			return fmt.Errorf("creating dev state dir %q: %w", devState, err)
+	// 		}
+	// 		serverArgs.StateDir = devState
+	// 	}
+	// 	if serverArgs.Hostname == "" {
+	// 		serverArgs.Hostname = "setec-dev"
+	// 	}
+	// 	kek = &testutil.DummyAEAD{
+	// 		Name: "SetecDevOnlyDummyEncryption",
+	// 	}
+	// 	log.Printf("dev mode: state dir is %q", serverArgs.StateDir)
+	// 	log.Printf("dev mode: hostname is %q", serverArgs.Hostname)
+	// 	log.Println("dev mode: using dummy KMS, NOT SAFE FOR PRODUCTION USE")
+	// }
 
 	if serverArgs.StateDir == "" {
 		return errors.New("--state-dir must be specified")
